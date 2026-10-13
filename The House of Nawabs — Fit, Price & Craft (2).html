@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The House of Nawabs — Fit, Price & Craft</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<style>
+:root{--bg:#f7f3ec;--card:#fffdf9;--ink:#2a2420;--mute:#7a6f65;--line:#e4dccf;--accent:#8c2f39;--gold:#a8832f;--body:#d9cfc0;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171412;--card:#211d1a;--ink:#efe8dc;--mute:#a09585;--line:#383129;--accent:#d27a84;--gold:#d4b05a;--body:#4a4137}}
+:root[data-theme="dark"]{--bg:#171412;--card:#211d1a;--ink:#efe8dc;--mute:#a09585;--line:#383129;--accent:#d27a84;--gold:#d4b05a;--body:#4a4137}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 100px)}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-weight:300}
+.serif{font-family:'Cormorant Garamond',Georgia,serif}
+input[type=range]{accent-color:var(--accent);width:100%}
+body{overflow-x:clip;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+@media (max-width:640px){input[type=range]{height:34px}input:not([type=range]):not([type=checkbox]),select{font-size:16px!important}button,select{min-height:40px}}
+.snap-strip{scrollbar-width:none}.snap-strip::-webkit-scrollbar{display:none}
+.card{background:var(--card);border:1px solid var(--line)}
+.track{transition:transform .8s cubic-bezier(.65,0,.35,1)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useState, useMemo, useEffect } = React;
+const html = htm.bind(React.createElement);
+const RATE={EUR:1,GBP:0.85,CHF:0.95};
+const eur = n => { const cu=store.s.cur; return new Intl.NumberFormat('en-IE',{style:'currency',currency:cu}).format(n*RATE[cu]); };
+
+/* ---------- SIZE DATA ---------- */
+const SIZES = [
+  {k:'S', uk:'8–10', eu:'36–38', us:'4–6', g:[98,80,104]},
+  {k:'M', uk:'12', eu:'40', us:'8', g:[104,86,110]},
+  {k:'L', uk:'14', eu:'42', us:'10', g:[110,92,116]},
+  {k:'XL', uk:'16–18', eu:'44–46', us:'12–14', g:[118,100,124]},
+];
+const LIMITS = [[92,98,104],[74,80,86],[98,104,110]]; // chest, waist, hip upper bounds for S, M, L
+const idxOf = (v, lim) => lim.findIndex(l => v < l) === -1 ? 3 : lim.findIndex(l => v < l);
+
+function Slider({label, cm, set, min, max, inch}) {
+  const shown = inch ? (cm/2.54).toFixed(1) + ' in' : cm + ' cm';
+  return html`<div class="mb-5">
+    <div class="flex justify-between text-xs tracking-widest uppercase mb-2" style=${{color:'var(--mute)'}}>
+      <span>${label}</span><span class="serif text-lg normal-case tracking-normal" style=${{color:'var(--ink)'}}>${shown}</span></div>
+    <input type="range" min=${min} max=${max} value=${cm} onChange=${e=>set(+e.target.value)} onInput=${e=>set(+e.target.value)} aria-label=${label}/>
+  </div>`;
+}
+
+function Silhouette({m, size}) {
+  const [c,w,h] = m, g = size.g;
+  const f = v => v/4*1.55;
+  const body = `M${100-40},74 L${100-f(c)},112 L${100-f(w)},165 L${100-f(h)},220 L${100-f(h)+4},325 L97,325 L97,250 L103,250 L103,325 L${100+f(h)-4},325 L${100+f(h)},220 L${100+f(w)},165 L${100+f(c)},112 L${100+40},74 Z`;
+  const kurti = `M${100-38},72 L${100-f(g[0])},112 L${100-f(g[1])},165 L${100-f(h>g[2]?h:g[2])},222 L${100-f(g[2])-9},292 L${100+f(g[2])+9},292 L${100+f(g[2])},222 L${100+f(g[1])},165 L${100+f(g[0])},112 L${100+38},72 Q100,86 ${100-38},72 Z`;
+  return html`<svg viewBox="0 0 200 340" class="w-full max-w-[260px] mx-auto" role="img" aria-label="Fit silhouette">
+    <circle cx="100" cy="42" r="15" fill="var(--body)"/><rect x="95" y="55" width="10" height="18" fill="var(--body)"/>
+    <path d=${body} fill="var(--body)" stroke="var(--mute)" stroke-width="0.8" style=${{transition:'all .35s'}}/>
+    <path d=${kurti} fill="var(--accent)" fill-opacity="0.28" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="4 2" style=${{transition:'all .35s'}}/>
+    <line x1="30" y1="112" x2="170" y2="112" stroke="var(--gold)" stroke-width=".5" stroke-dasharray="2 3"/>
+    <line x1="30" y1="165" x2="170" y2="165" stroke="var(--gold)" stroke-width=".5" stroke-dasharray="2 3"/>
+    <line x1="30" y1="222" x2="170" y2="222" stroke="var(--gold)" stroke-width=".5" stroke-dasharray="2 3"/>
+    <text x="8" y="110" font-size="8" fill="var(--mute)">Chest</text><text x="8" y="163" font-size="8" fill="var(--mute)">Waist</text><text x="8" y="220" font-size="8" fill="var(--mute)">Hip</text>
+  </svg>`;
+}
+
+/* ---------- MODULE 1 ---------- */
+function FitMatrix() {
+  const [sys, setSys] = useState('EU');
+  const [inch, setInch] = useState(false);
+  const [m, setM] = useState([92, 76, 100]);
+  const [tryOn, setTryOn] = useState(0); // 0 idle, 1-3 steps, 4 done
+  const set = i => v => setM(p => p.map((x,j) => j===i ? v : x));
+  const idx = Math.max(...m.map((v,i) => idxOf(v, LIMITS[i])));
+  const size = SIZES[idx];
+  useEffect(() => setStore({size:size.k}), [size.k]);
+  const driver = ['Chest','Waist','Hip'][m.map((v,i)=>idxOf(v,LIMITS[i])).indexOf(idx)];
+  const ease = size.g.map((g,i) => g - m[i]);
+  const fit = ease[0] < 5 ? 'Close, tailored fit' : ease[0] < 11 ? 'Classic relaxed fit' : 'Generous, flowing fit';
+  useEffect(() => {
+    if (tryOn > 0 && tryOn < 4) { const t = setTimeout(() => setTryOn(tryOn + 1), 1100); return () => clearTimeout(t); }
+  }, [tryOn]);
+  const steps = ['Reading your proportions','Draping Chikankari fabric','Rendering preview'];
+  const Seg = ({opts, val, on}) => html`<div class="inline-flex border" style=${{borderColor:'var(--line)'}}>${opts.map(o => html`
+    <button key=${o} onClick=${()=>on(o)} class="px-4 py-1.5 text-xs tracking-widest uppercase transition"
+      style=${val===o?{background:'var(--ink)',color:'var(--bg)'}:{color:'var(--mute)'}}>${o}</button>`)}</div>`;
+  return html`<section id="fit" class="py-16 md:py-24">
+    <p class="text-xs tracking-[.3em] uppercase" style=${{color:'var(--gold)'}}>I · Fit</p>
+    <h2 class="serif text-4xl md:text-5xl mt-2 mb-10">Size &amp; Fit Matrix</h2>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <div class="card p-6 md:p-8">
+        <div class="flex flex-wrap gap-4 justify-between mb-8">
+          <${Seg} opts=${['UK','EU','US']} val=${sys} on=${setSys}/>
+          <${Seg} opts=${['cm','inches']} val=${inch?'inches':'cm'} on=${v=>setInch(v==='inches')}/>
+        </div>
+        <${Slider} label="Chest" cm=${m[0]} set=${set(0)} min=${76} max=${126} inch=${inch}/>
+        <${Slider} label="Waist" cm=${m[1]} set=${set(1)} min=${60} max=${112} inch=${inch}/>
+        <${Slider} label="Hip" cm=${m[2]} set=${set(2)} min=${84} max=${134} inch=${inch}/>
+        <div class="mt-8 pt-6 border-t flex items-center justify-between gap-4" style=${{borderColor:'var(--line)'}}>
+          <div><p class="text-xs tracking-widest uppercase" style=${{color:'var(--mute)'}}>Your Nawabs size</p>
+            <p class="serif text-6xl leading-none mt-1" style=${{color:'var(--accent)'}}>${size.k}</p></div>
+          <div class="text-right text-sm"><p class="serif text-2xl">${sys} ${size[sys.toLowerCase()]}</p>
+            <p style=${{color:'var(--mute)'}}>Driven by your ${driver.toLowerCase()}</p></div>
+        </div>
+        <div class="grid grid-cols-4 gap-2 mt-6 text-center text-xs">
+          ${SIZES.map(s => html`<div key=${s.k} class="py-2 border" style=${s.k===size.k?{borderColor:'var(--accent)',color:'var(--accent)'}:{borderColor:'var(--line)',color:'var(--mute)'}}>
+            <div class="serif text-lg">${s.k}</div>${s[sys.toLowerCase()]}</div>`)}
+        </div>
+      </div>
+      <div class="card p-6 md:p-8 flex flex-col">
+        <div class="flex gap-6 flex-col sm:flex-row items-center flex-1">
+          <${Silhouette} m=${m} size=${size}/>
+          <div class="text-sm w-full">
+            <p class="serif text-2xl mb-1">${fit}</p>
+            <p class="mb-4" style=${{color:'var(--mute)'}}>Knee-length kurti, size ${size.k}. Dashed line is the garment over your body.</p>
+            <table class="w-full text-sm"><tbody>
+              ${['Chest','Waist','Hip'].map((n,i) => html`<tr key=${n} class="border-t" style=${{borderColor:'var(--line)'}}>
+                <td class="py-2" style=${{color:'var(--mute)'}}>${n} ease</td>
+                <td class="py-2 text-right">+${inch?(ease[i]/2.54).toFixed(1)+' in':ease[i]+' cm'}</td></tr>`)}
+            </tbody></table>
+          </div>
+        </div>
+        <button onClick=${()=>setTryOn(tryOn===0||tryOn===4?1:tryOn)} class="mt-6 w-full py-3 text-xs tracking-[.25em] uppercase transition hover:opacity-90"
+          style=${{background:'var(--accent)',color:'#fff'}}>✦ AI Try-On</button>
+        ${tryOn>0 && html`<div class="mt-4 border p-4 text-sm" style=${{borderColor:'var(--line)'}}>
+          ${tryOn<4 ? html`<p>${steps[tryOn-1]}…</p><div class="h-px mt-3 relative" style=${{background:'var(--line)'}}>
+            <div class="h-px absolute left-0 top-0 transition-all duration-1000" style=${{width:(tryOn*33)+'%',background:'var(--accent)'}}></div></div>`
+          : html`<p class="serif text-xl">Preview ready</p>
+            <p style=${{color:'var(--mute)'}}>Upload a full-length photo to see size ${size.k} on you. (Demo: upload connects to your try-on service.)</p>
+            <label class="inline-block mt-3 px-4 py-2 border cursor-pointer text-xs tracking-widest uppercase" style=${{borderColor:'var(--ink)'}}>
+              Choose photo<input type="file" accept="image/*" class="hidden"/></label>`}
+        </div>`}
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ---------- MODULE 2 ---------- */
+const COUNTRIES = {
+  Germany:{vat:19,duty:12,re:/^\d{5}$/,ph:'10115'}, France:{vat:20,duty:12,re:/^\d{5}$/,ph:'75001'},
+  Italy:{vat:22,duty:12,re:/^\d{5}$/,ph:'00184'}, Spain:{vat:21,duty:12,re:/^\d{5}$/,ph:'28001'},
+  Netherlands:{vat:21,duty:12,re:/^\d{4}\s?[A-Za-z]{2}$/,ph:'1012 AB'}, Sweden:{vat:25,duty:12,re:/^\d{3}\s?\d{2}$/,ph:'111 22'},
+  Ireland:{vat:23,duty:12,re:/^[A-Za-z]\d{2}\s?[A-Za-z0-9]{4}$/,ph:'D02 X285'},
+  'United Kingdom':{vat:20,duty:12,re:/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s?\d[A-Za-z]{2}$/,ph:'SW1A 1AA'},
+  Switzerland:{vat:8.1,duty:3,re:/^\d{4}$/,ph:'8001'},
+};
+const PRODUCTS = [
+  {n:'Chikankari Angarkha Kurti', p:185}, {n:'Block-Printed Kalidar Kurti', p:142}, {n:'Zardozi Festive Kurti', p:268},
+];
+const SHIP = {express:{n:'Express',d:'3–5 working days',fee:38}, economy:{n:'Economy',d:'8–12 working days',fee:16}};
+
+function Pricing() {
+  const [country, setCountry] = useState(store.s.country);
+  const [zip, setZip] = useState('');
+  const [pi, setPi] = useState(0);
+  const [qty, setQty] = useState(1);
+  const [ship, setShip] = useState('economy');
+  const c = COUNTRIES[country];
+  useStore();
+  useEffect(() => setStore({country, ship}), [country, ship]);
+  useEffect(() => { if (store.s.country !== country) setCountry(store.s.country); }, [store.s.country]);
+  const zipOk = c.re.test(zip.trim());
+  const calc = useMemo(() => {
+    const goods = PRODUCTS[pi].p * qty, sh = SHIP[ship].fee;
+    const duty = (goods + sh) * c.duty / 100;
+    const vat = (goods + sh + duty) * c.vat / 100;
+    return {goods, sh, duty, vat, total: goods + sh + duty + vat};
+  }, [pi, qty, ship, country]);
+  const field = 'w-full px-3 py-2.5 border bg-transparent text-sm outline-none focus:border-[var(--accent)]';
+  const lab = 'block text-xs tracking-widest uppercase mb-2';
+  const rows = [
+    ['Garment subtotal', eur(calc.goods), `${qty} × ${eur(PRODUCTS[pi].p)}`],
+    [`${SHIP[ship].n} shipping`, eur(calc.sh), SHIP[ship].d],
+    ['Import duty', eur(calc.duty), `${c.duty}% on goods + freight`],
+    [`VAT · ${country}`, eur(calc.vat), `${c.vat}% on goods + freight + duty`],
+  ];
+  return html`<section id="price" class="py-16 md:py-24 border-t" style=${{borderColor:'var(--line)'}}>
+    <p class="text-xs tracking-[.3em] uppercase" style=${{color:'var(--gold)'}}>II · Price</p>
+    <h2 class="serif text-4xl md:text-5xl mt-2 mb-3">Delivered Duty Paid</h2>
+    <p class="mb-10 max-w-xl" style=${{color:'var(--mute)'}}>No surprise fees at your door. Duty and VAT are collected at checkout, so the price below is the price you pay.</p>
+    <div class="grid lg:grid-cols-5 gap-8">
+      <div class="card p-6 md:p-8 lg:col-span-2 space-y-5">
+        <div><label class=${lab} style=${{color:'var(--mute)'}}>Garment</label>
+          <select class=${field} style=${{borderColor:'var(--line)',background:'var(--card)'}} value=${pi} onChange=${e=>setPi(+e.target.value)}>
+            ${PRODUCTS.map((p,i)=>html`<option key=${i} value=${i}>${p.n} — ${eur(p.p)}</option>`)}</select></div>
+        <div class="flex items-center justify-between"><span class=${lab} style=${{color:'var(--mute)',margin:0}}>Quantity</span>
+          <div class="flex items-center border" style=${{borderColor:'var(--line)'}}>
+            <button class="px-3 py-1" onClick=${()=>setQty(q=>Math.max(1,q-1))} aria-label="Decrease">−</button>
+            <span class="px-4 serif text-lg">${qty}</span>
+            <button class="px-3 py-1" onClick=${()=>setQty(q=>Math.min(10,q+1))} aria-label="Increase">+</button></div></div>
+        <div><label class=${lab} style=${{color:'var(--mute)'}}>Destination</label>
+          <select class=${field} style=${{borderColor:'var(--line)',background:'var(--card)'}} value=${country} onChange=${e=>{setCountry(e.target.value);setZip('');}}>
+            ${Object.keys(COUNTRIES).map(k=>html`<option key=${k}>${k}</option>`)}</select></div>
+        <div><label class=${lab} style=${{color:'var(--mute)'}}>Postal code</label>
+          <input class=${field} style=${{borderColor:zip&&!zipOk?'var(--accent)':'var(--line)'}} value=${zip} placeholder=${'e.g. '+c.ph} onChange=${e=>setZip(e.target.value)} onInput=${e=>setZip(e.target.value)}/>
+          <p class="text-xs mt-1.5 h-4" style=${{color:zipOk?'var(--gold)':'var(--accent)'}}>${zip?(zipOk?'✓ Delivery available':'Check the format for '+country):''}</p></div>
+        <div><span class=${lab} style=${{color:'var(--mute)'}}>Delivery route</span>
+          <div class="grid grid-cols-2 gap-3">
+            ${Object.entries(SHIP).map(([k,s])=>html`<button key=${k} onClick=${()=>setShip(k)} class="text-left p-3 border transition"
+              style=${ship===k?{borderColor:'var(--accent)',background:'color-mix(in srgb,var(--accent) 8%,transparent)'}:{borderColor:'var(--line)'}}>
+              <div class="serif text-lg">${s.n}</div><div class="text-xs" style=${{color:'var(--mute)'}}>${s.d}</div>
+              <div class="text-sm mt-1">${eur(s.fee)}</div></button>`)}</div></div>
+      </div>
+      <div class="card p-6 md:p-8 lg:col-span-3">
+        <h3 class="serif text-2xl mb-1">${PRODUCTS[pi].n}</h3>
+        <p class="text-sm mb-6" style=${{color:'var(--mute)'}}>Landed cost to ${zipOk?zip.trim().toUpperCase()+', ':''}${country}</p>
+        <div class="overflow-x-auto"><table class="w-full text-sm min-w-[360px]">
+          <thead><tr class="text-xs tracking-widest uppercase text-left" style=${{color:'var(--mute)'}}>
+            <th class="pb-3 font-normal">Item</th><th class="pb-3 font-normal">Basis</th><th class="pb-3 font-normal text-right">Amount</th></tr></thead>
+          <tbody>${rows.map(r=>html`<tr key=${r[0]} class="border-t" style=${{borderColor:'var(--line)'}}>
+            <td class="py-3.5">${r[0]}</td><td class="py-3.5" style=${{color:'var(--mute)'}}>${r[2]}</td><td class="py-3.5 text-right">${r[1]}</td></tr>`)}</tbody>
+          <tfoot><tr class="border-t-2" style=${{borderColor:'var(--ink)'}}>
+            <td class="pt-5 serif text-2xl" colspan="2">Total landed price</td>
+            <td class="pt-5 serif text-3xl text-right" style=${{color:'var(--accent)'}}>${eur(calc.total)}</td></tr></tfoot>
+        </table></div>
+        <div class="mt-8 grid grid-cols-3 text-center text-xs border-t pt-6" style=${{borderColor:'var(--line)',color:'var(--mute)'}}>
+          <div><div class="serif text-2xl" style=${{color:'var(--ink)'}}>${Math.round((calc.duty/calc.total)*100)}%</div>duty</div>
+          <div><div class="serif text-2xl" style=${{color:'var(--ink)'}}>${Math.round((calc.vat/calc.total)*100)}%</div>VAT</div>
+          <div><div class="serif text-2xl" style=${{color:'var(--ink)'}}>€0</div>fees at delivery</div></div>
+        <p class="text-xs mt-6" style=${{color:'var(--mute)'}}>Illustrative rates for demonstration; final duty and VAT are confirmed at checkout.</p>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ---------- MODULE 3 ---------- */
+const STORY = [
+  {t:'Carving the Block', place:'Chowk, Lucknow', tx:'A master carver shapes seasoned sheesham wood into a printing block, one fine line at a time. A single motif can take three days to cut.', img:'Close-up: hands carving a wooden block', g:'linear-gradient(135deg,#6b4a2f,#c19a6b)'},
+  {t:'Stamped with Nature', place:'Bakshi Ka Talab', tx:'Colour comes from pomegranate rind, indigo and madder root. Each block is pressed by hand, so no two repeats are identical.', img:'Close-up: natural dye block print on cotton', g:'linear-gradient(135deg,#3a4a6b,#a3b4c9)'},
+  {t:'Sun & Slow Drying', place:'Gomti riverbank', tx:'Printed cloth rests in open air for two days, letting plant dyes bind to the fibre and deepen with the light.', img:'Close-up: fabric drying in sunlight', g:'linear-gradient(135deg,#b89a4a,#efe0b0)'},
+  {t:'The Chikankari Hand', place:'Old Lucknow workshops', tx:'Local craftswomen work shadow stitches, murri and jaali with fine white thread. A single kurti holds up to 120 hours of embroidery.', img:'Close-up: hand embroidery stitch detail', g:'linear-gradient(135deg,#8c2f39,#e3b6b0)'},
+  {t:'Finished, Folded, Sent', place:'To your door in Europe', tx:'Pressed, quality-checked and wrapped in recycled cotton, each piece travels with the name of the artisan who made it.', img:'Close-up: finished kurti with artisan tag', g:'linear-gradient(135deg,#3f5a4a,#b9cdb5)'},
+];
+
+function Lookbook() {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const go = d => setI(p => (p + d + STORY.length) % STORY.length);
+  useEffect(() => { if (paused) return; const t = setInterval(() => go(1), 7000); return () => clearInterval(t); }, [paused]);
+  useEffect(() => {
+    const k = e => { if (e.key==='ArrowRight') go(1); if (e.key==='ArrowLeft') go(-1); };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  }, []);
+  return html`<section id="craft" class="py-16 md:py-24 border-t" style=${{borderColor:'var(--line)'}}
+    onMouseEnter=${()=>setPaused(true)} onMouseLeave=${()=>setPaused(false)}>
+    <p class="text-xs tracking-[.3em] uppercase" style=${{color:'var(--gold)'}}>III · Craft</p>
+    <h2 class="serif text-4xl md:text-5xl mt-2 mb-10">The Slow Fashion Lookbook</h2>
+    <div class="card overflow-hidden">
+      <div class="overflow-hidden"><div class="track flex" style=${{transform:`translateX(-${i*100}%)`}}>
+        ${STORY.map((s,n) => html`<article key=${n} class="w-full shrink-0 grid md:grid-cols-2" aria-hidden=${n!==i}>
+          <div class="relative min-h-[280px] md:min-h-[460px]" style=${{background:s.g}}>
+            <div class="absolute inset-4 border border-white/40 flex items-end p-4">
+              <span class="text-[10px] tracking-[.25em] uppercase text-white/90">HD image · ${s.img}</span></div></div>
+          <div class="p-6 md:p-14 flex flex-col justify-center">
+            <p class="serif italic text-lg" style=${{color:'var(--gold)'}}>Chapter ${n+1} of ${STORY.length} · ${s.place}</p>
+            <h3 class="serif text-4xl md:text-5xl my-4 leading-tight">${s.t}</h3>
+            <p class="leading-relaxed max-w-md" style=${{color:'var(--mute)'}}>${s.tx}</p></div>
+        </article>`)}
+      </div></div>
+      <div class="flex items-center justify-between px-6 md:px-10 py-5 border-t" style=${{borderColor:'var(--line)'}}>
+        <div class="flex gap-2">${STORY.map((s,n)=>html`<button key=${n} onClick=${()=>setI(n)} aria-label=${'Go to '+s.t}
+          class="h-1 transition-all duration-500" style=${{width:n===i?'36px':'14px',background:n===i?'var(--accent)':'var(--line)'}}></button>`)}</div>
+        <div class="flex gap-3">
+          <button onClick=${()=>go(-1)} class="w-10 h-10 border rounded-full" style=${{borderColor:'var(--line)'}} aria-label="Previous">←</button>
+          <button onClick=${()=>go(1)} class="w-10 h-10 border rounded-full" style=${{borderColor:'var(--line)'}} aria-label="Next">→</button></div>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ---------- STORE ---------- */
+const store={s:{size:'M',country:'Germany',ship:'economy',cur:'EUR',cart:[],bag:false,wish:[],legal:null,user:null,acct:false},l:new Set()};
+const useStore=()=>{const[,f]=useState(0);useEffect(()=>{const fn=()=>f(x=>x+1);store.l.add(fn);return()=>store.l.delete(fn)},[]);return store.s};
+const setStore=p=>{Object.assign(store.s,p);store.l.forEach(f=>f())};
+const landed=g=>{const c=COUNTRIES[store.s.country],sh=SHIP[store.s.ship].fee,d=(g+sh)*c.duty/100,v=(g+sh+d)*c.vat/100;return{sh,d,v,t:g+sh+d+v,c}};
+const chip=on=>({borderColor:on?'var(--accent)':'var(--line)',color:on?'var(--accent)':'var(--mute)'});
+const mute={color:'var(--mute)'};
+const Sec=({id,no,title,sub,children})=>html`<section id=${id} class="py-16 md:py-24 border-t" style=${{borderColor:'var(--line)'}}><p class="text-xs tracking-[.3em] uppercase" style=${{color:'var(--gold)'}}>${no}</p><h2 class="serif text-4xl md:text-5xl mt-2 mb-3">${title}</h2>${sub&&html`<p class="mb-10 max-w-xl" style=${mute}>${sub}</p>`}${children}</section>`;
+
+/* ---------- SHOP ---------- */
+const SHOP=[
+ {id:0,n:'Chikankari Angarkha Kurti',p:185,fab:'Mulmul cotton, shadow-work embroidery',by:'Zainab',g:'linear-gradient(135deg,#8c2f39,#e3b6b0)'},
+ {id:1,n:'Block-Printed Kalidar Kurti',p:142,fab:'Hand block-printed cotton, plant dyes',by:'Imran',g:'linear-gradient(135deg,#3a4a6b,#a3b4c9)'},
+ {id:2,n:'Zardozi Festive Kurti',p:268,fab:'Chanderi silk, hand zardozi',by:'Shabnam',g:'linear-gradient(135deg,#b89a4a,#efe0b0)'}];
+function Shop(){
+ const st=useStore(), c=COUNTRIES[st.country];
+ const [sel,setSel]=useState({}),[mtm,setMtm]=useState({}),[open,setOpen]=useState(null);
+ return html`<${Sec} id="shop" no="Shop" title="The Collection" sub=${'Made to order in Lucknow. Prices include estimated duty & VAT for '+st.country+' (delivery added at bag).'}>
+ <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${SHOP.map(p=>{
+  const sz=sel[p.id]||st.size, m=mtm[p.id], price=p.p+(m?40:0), lp=price*(1+c.duty/100)*(1+c.vat/100), w=st.wish.includes(p.id);
+  return html`<article key=${p.id} class="card flex flex-col">
+   <div class="relative h-64" style=${{background:p.g}}><span class="absolute bottom-3 left-3 text-[10px] tracking-[.25em] uppercase text-white/90">HD product image</span>
+    <button onClick=${()=>setStore({wish:w?st.wish.filter(x=>x!==p.id):[...st.wish,p.id]})} class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 text-lg" style=${{color:'#8c2f39'}} aria-label="Wishlist">${w?'♥':'♡'}</button></div>
+   <div class="p-5 flex-1 flex flex-col">
+    <h3 class="serif text-2xl">${p.n}</h3><p class="text-xs mb-3" style=${mute}>${p.fab} · made by ${p.by}</p>
+    <p class="serif text-3xl" style=${{color:'var(--accent)'}}>${eur(lp)}</p><p class="text-xs mb-4" style=${mute}>landed to ${st.country} · base ${eur(price)}</p>
+    <div class="flex gap-2 mb-1">${SIZES.map(s=>html`<button key=${s.k} onClick=${()=>setSel({...sel,[p.id]:s.k})} class="flex-1 py-1.5 border text-sm" style=${chip(sz===s.k)}>${s.k}${s.k===st.size?' ★':''}</button>`)}</div>
+    <p class="text-[11px] mb-3" style=${mute}>★ your recommended size from the Fit Matrix</p>
+    <label class="text-xs flex gap-2 mb-4"><input type="checkbox" checked=${!!m} onChange=${e=>setMtm({...mtm,[p.id]:e.target.checked})}/> Made to my measurements (+€40, final sale)</label>
+    <button onClick=${()=>setStore({cart:[...st.cart,{k:Date.now()+p.id,n:p.n,size:sz,m:!!m,price}],bag:true})} class="py-3 text-xs tracking-[.25em] uppercase" style=${{background:'var(--accent)',color:'#fff'}}>Add to bag · ${sz}</button>
+    <p class="text-xs mt-3" style=${mute}>Complimentary 30-day size exchanges for EU orders. <a href="#returns" class="underline">Returns &amp; Fit Guarantee</a></p>
+    <button onClick=${()=>setOpen(open===p.id?null:p.id)} class="text-xs mt-2 underline text-left">Fabric &amp; care</button>
+    ${open===p.id&&html`<p class="text-xs mt-2 leading-relaxed" style=${mute}>${p.fab}. Hand wash cold with mild soap, dry in shade, press inside-out on low heat. Natural dyes may soften with time; that is part of their character.</p>`}
+   </div></article>`})}</div></${Sec}>`;
+}
+
+/* ---------- TRUST ---------- */
+const ARTISANS=[['Zainab Begum','Chikankari embroiderer · 22 years'],['Imran Qureshi','Block carver · third generation'],['Shabnam Ara','Zardozi artisan · 15 years']];
+const REVIEWS=[{n:'Anna K., Berlin',h:168,eu:38,b:'M',f:'True to size',t:'The embroidery is extraordinary up close.'},{n:'Claire D., Lyon',h:162,eu:36,b:'S',f:'True to size',t:'Beautiful drape. I wear it over jeans.'},{n:'Sofia R., Madrid',h:174,eu:42,b:'L',f:'Slightly roomy',t:'Generous cut, lovely cotton.'},{n:'Marit V., Utrecht',h:170,eu:40,b:'M',f:'True to size',t:'Arrived with the artisan’s name on the tag.'}];
+function Trust(){
+ const st=useStore(); const [mine,setMine]=useState(false);
+ const list=REVIEWS.filter(r=>!mine||r.b===st.size);
+ const split=[['Artisan wages',38],['Materials & dyes',22],['Workshop & studio',12],['Shipping, duty & VAT',18],['House of Nawabs',10]];
+ return html`<${Sec} id="artisans" no="Makers & Proof" title="Made by Named Hands" sub="Sample profiles and reviews shown; replace with your real artisans and verified customers.">
+ <div class="grid md:grid-cols-3 gap-6 mb-12">${ARTISANS.map(([n,r],i)=>html`<div key=${n} class="card p-5 flex gap-4 items-center"><div class="w-16 h-16 rounded-full shrink-0" style=${{background:SHOP[i].g}}></div><div><p class="serif text-xl">${n}</p><p class="text-xs" style=${mute}>${r}</p></div></div>`)}</div>
+ <div class="grid lg:grid-cols-2 gap-8">
+  <div><div class="flex justify-between items-center mb-4"><h3 class="serif text-2xl">Reviews with fit notes</h3>
+   <button onClick=${()=>setMine(!mine)} class="text-xs px-3 py-1.5 border" style=${chip(mine)}>${mine?'Showing size '+st.size:'Show my size ('+st.size+')'}</button></div>
+   <div class="space-y-3">${list.length?list.map(r=>html`<div key=${r.n} class="card p-4 text-sm"><p class="text-xs mb-1" style=${mute}>${r.n} · ${r.h} cm · EU ${r.eu} · bought ${r.b} · <b>${r.f}</b></p><p class="serif text-lg">“${r.t}”</p></div>`):html`<p class="text-sm" style=${mute}>No reviews for this size yet.</p>`}</div></div>
+  <div class="card p-6"><h3 class="serif text-2xl mb-1">Where your money goes</h3><p class="text-xs mb-5" style=${mute}>Illustrative split of a typical order</p>
+   ${split.map(([l,v])=>html`<div key=${l} class="mb-3"><div class="flex justify-between text-xs mb-1"><span>${l}</span><span>${v}%</span></div><div class="h-1" style=${{background:'var(--line)'}}><div class="h-1" style=${{width:v+'%',background:'var(--accent)'}}></div></div></div>`)}
+   <div class="flex flex-wrap gap-2 mt-5 text-[11px] tracking-widest uppercase">${['GOTS-certified cotton (add certificate no.)','Fair-wage audited','Plant-based dyes'].map(x=>html`<span key=${x} class="border px-2 py-1" style=${{borderColor:'var(--gold)',color:'var(--gold)'}}>${x}</span>`)}</div></div>
+ </div></${Sec}>`;
+}
+
+/* ---------- RETURNS ---------- */
+const POL=[
+ ['Your rights & our window','EU and UK customers may cancel within 14 days of receipt without giving a reason. We extend this to 30 days for returns and exchanges, because international sizing deserves patience.'],
+ ['Eligibility','Items must be unworn, unwashed and unaltered, free from odours, makeup or deodorant marks, with all tags attached and in the original packaging. Made-to-measure pieces are final sale unless they arrive damaged or defective.'],
+ ['Free size exchanges','Your first size exchange is free. Start it in our returns portal and we dispatch the new size while the original travels back to our European returns hub or via a prepaid label.'],
+ ['Return shipping','Damaged, flawed or incorrect items: we cover 100% of return shipping and refund everything, including delivery and duties. Change of mind: use our prepaid, customs-cleared label; a flat €12 return fee is deducted from your refund.'],
+ ['Refunds, duty & VAT','After inspection, the garment price is refunded to your original payment method within 5–7 business days. Import duty and VAT paid at checkout are refunded in full, with no administration fee.']];
+function Returns(){
+ const st=useStore(); const [open,setOpen]=useState(0),[defect,setDefect]=useState(false),[price,setPrice]=useState(185);
+ const L=landed(price), fee=defect?0:12, refund=price+L.d+L.v+(defect?L.sh:0)-fee;
+ const rows=[['Garment',price],['Import duty',L.d],['VAT · '+st.country,L.v],['Original delivery',defect?L.sh:0],['Return fee',-fee]];
+ return html`<${Sec} id="returns" no="Returns" title="Returns & Fit Guarantee" sub="Complimentary 30-day size exchanges for EU orders. Hassle-free returns through our European returns hub.">
+ <div class="grid lg:grid-cols-2 gap-8">
+  <div class="card">${POL.map(([t,x],i)=>html`<div key=${t} class=${i?'border-t':''} style=${{borderColor:'var(--line)'}}>
+   <button onClick=${()=>setOpen(open===i?-1:i)} class="w-full flex justify-between px-5 py-4 text-left serif text-xl"><span>${t}</span><span>${open===i?'−':'+'}</span></button>
+   ${open===i&&html`<p class="px-5 pb-5 text-sm leading-relaxed" style=${mute}>${x}</p>`}</div>`)}</div>
+  <div class="card p-6"><h3 class="serif text-2xl mb-4">Refund estimator</h3>
+   <div class="flex gap-2 mb-5">${[['Change of mind',false],['Damaged / incorrect',true]].map(([l,v])=>html`<button key=${l} onClick=${()=>setDefect(v)} class="flex-1 py-2 border text-xs tracking-widest uppercase" style=${chip(defect===v)}>${l}</button>`)}</div>
+   <label class="text-xs tracking-widest uppercase" style=${mute}>Garment price · ${eur(price)}</label><input type="range" min="100" max="300" value=${price} onInput=${e=>setPrice(+e.target.value)} onChange=${e=>setPrice(+e.target.value)}/>
+   <table class="w-full text-sm mt-4"><tbody>${rows.map(([l,v])=>html`<tr key=${l} class="border-t" style=${{borderColor:'var(--line)'}}><td class="py-2">${l}</td><td class="py-2 text-right">${v<0?'−':''}${eur(Math.abs(v))}</td></tr>`)}</tbody>
+   <tfoot><tr class="border-t-2" style=${{borderColor:'var(--ink)'}}><td class="pt-3 serif text-xl">You receive</td><td class="pt-3 serif text-2xl text-right" style=${{color:'var(--accent)'}}>${eur(refund)}</td></tr></tfoot></table>
+   <p class="text-xs mt-4" style=${mute}>Prepaid return labels are pre-cleared through customs, so there are no forms to fill in.</p></div>
+ </div></${Sec}>`;
+}
+
+/* ---------- JOURNAL ---------- */
+function Journal(){
+ const cards=[['Styling guide','Over straight jeans with white sneakers. Under a camel wool coat in autumn. With tailored trousers and loafers for the office. Add one statement earring and let the embroidery lead.'],['Care guide','Hand wash cold, separately for the first two washes. Dry flat in shade. Steam or press inside-out. Store folded in muslin, never hung, to protect the embroidery.'],['Lucknow heritage','Lucknow has been the home of Chikankari for centuries, born in Nawabi courts. Today the craft lives on in family workshops, largely led by women, where one piece may take weeks.']];
+ return html`<${Sec} id="journal" no="Journal" title="Wear it. Keep it. Know it."><div class="grid md:grid-cols-3 gap-6">${cards.map(([t,x])=>html`<div key=${t} class="card p-6"><h3 class="serif text-2xl mb-3">${t}</h3><p class="text-sm leading-relaxed" style=${mute}>${x}</p></div>`)}</div></${Sec}>`;
+}
+
+/* ---------- NEWSLETTER, LEGAL, OVERLAYS ---------- */
+function Newsletter(){
+ const [e,setE]=useState(''),[ok,setOk]=useState(false);
+ return html`<div class="max-w-md mx-auto mb-10 normal-case tracking-normal"><p class="serif text-2xl mb-3" style=${{color:'var(--ink)'}}>10% off your first order</p>
+  ${ok?html`<p class="text-sm" style=${{color:'var(--gold)'}}>Thank you. Your code: NAWAB10</p>`:html`<div class="flex"><input value=${e} onInput=${x=>setE(x.target.value)} onChange=${x=>setE(x.target.value)} placeholder="Email address" class="flex-1 px-3 py-2 border bg-transparent text-sm outline-none" style=${{borderColor:'var(--line)',color:'var(--ink)'}}/>
+  <button onClick=${()=>/^\S+@\S+\.\S+$/.test(e)&&setOk(true)} class="px-4 text-xs tracking-widest uppercase" style=${{background:'var(--ink)',color:'var(--bg)'}}>Join</button></div>`}</div>`;
+}
+const LEGAL={Imprint:'[Company name, registered address, managing director, commercial register no., VAT ID, contact email and phone. Required in Germany and Austria.]',Privacy:'[GDPR privacy policy: what data you collect, legal basis, retention, processors (payments, shipping), and customer rights of access, correction and deletion.]','Terms':'[Terms of sale: pricing in EUR/GBP/CHF, DDP delivery terms, made-to-order lead times, 14-day statutory withdrawal right plus our 30-day extension, and governing law.]','Cookie settings':'[Cookie preferences: essential, analytics and marketing categories with individual opt-in.]','Returns form':'[EU model withdrawal form: name, order number, items, date of receipt, signature.]'};
+function LegalLinks(){return html`<div class="flex flex-wrap justify-center gap-5 mt-2">${Object.keys(LEGAL).map(k=>html`<button key=${k} onClick=${()=>setStore({legal:k})} class="hover:opacity-70">${k}</button>`)}</div>`}
+function CurSelect(){const st=useStore();return html`<select value=${st.cur} onChange=${e=>setStore({cur:e.target.value})} class="bg-transparent text-[11px] tracking-widest outline-none" aria-label="Currency" style=${{color:'var(--ink)'}}>${Object.keys(RATE).map(c=>html`<option key=${c} style=${{color:'#000'}}>${c}</option>`)}</select>`}
+function BagBtn(){const st=useStore();return html`<button onClick=${()=>setStore({bag:true})}>Bag (${st.cart.length})</button>`}
+/* ---------- ACCOUNT ---------- */
+const LA='nawabs_acct',LSN='nawabs_sess',mem={};
+const lsGet=k=>{try{const v=localStorage.getItem(k);return v==null?(mem[k]??null):v}catch(e){return mem[k]??null}};
+const lsSet=(k,v)=>{if(v==null)delete mem[k];else mem[k]=v;try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+const getAcct=()=>{try{return JSON.parse(lsGet(LA)||'null')}catch(e){return null}};
+const applyUser=u=>{const p={user:u};if(u&&COUNTRIES[u.country])p.country=u.country;if(u&&RATE[u.cur])p.cur=u.cur;setStore(p)};
+{const a=getAcct();if(a&&lsGet(LSN)===a.email){store.s.user=a;if(COUNTRIES[a.country])store.s.country=a.country;if(RATE[a.cur])store.s.cur=a.cur}}
+function AcctBtn(){const u=useStore().user;return html`<button onClick=${()=>setStore({acct:true})} aria-label='Account'>${u?html`<span class='inline-flex w-7 h-7 rounded-full items-center justify-center text-xs' style=${{background:'var(--accent)',color:'#fff'}}>${(u.name||'?')[0].toUpperCase()}</span>`:html`<span><span class='md:hidden text-base'>\u263a</span><span class='hidden md:inline'>Sign in</span></span>`}</button>`}
+function Account(){
+ const st=useStore(), u=st.user;
+ const blank={name:'',email:'',phone:'',address:'',city:'',postal:'',country:st.country,cur:st.cur,size:st.size,marketing:false,consent:false};
+ const [mode,setMode]=useState('up'),[f,setF]=useState(blank),[err,setErr]=useState({}),[tab,setTab]=useState('details'),[saved,setSaved]=useState(false),[delAsk,setDelAsk]=useState(false);
+ useEffect(()=>{if(st.acct){setF(u?{...blank,...u}:blank);setErr({});setSaved(false);setDelAsk(false);setTab('details');setMode(getAcct()?'in':'up')}},[st.acct,!!u]);
+ if(!st.acct) return null;
+ const mail=/^\S+@\S+\.\S+$/;
+ const set=k=>e=>{setSaved(false);setF({...f,[k]:e.target.type==='checkbox'?e.target.checked:e.target.value})};
+ const doIn=()=>{const a=getAcct();if(!mail.test(f.email))return setErr({email:'Enter a valid email'});if(!a||a.email.toLowerCase()!==f.email.trim().toLowerCase())return setErr({email:'No account with this email on this device. Create one instead.'});lsSet(LSN,a.email);applyUser(a)};
+ const doSave=()=>{const e={};if(!f.name.trim())e.name='Please enter your name';if(!mail.test(f.email))e.email='Enter a valid email';if(f.phone&&!/^[+\d][\d\s()-]{6,}$/.test(f.phone))e.phone='Check the phone number';if(f.postal&&!COUNTRIES[f.country].re.test(f.postal.trim()))e.postal='Format for '+f.country+': '+COUNTRIES[f.country].ph;if(!u&&!f.consent)e.consent='Please accept to continue';setErr(e);if(Object.keys(e).length)return;const a={...f,name:f.name.trim(),email:f.email.trim(),consent:true,created:(u&&u.created)||new Date().toISOString().slice(0,10)};lsSet(LA,JSON.stringify(a));lsSet(LSN,a.email);applyUser(a);setSaved(true)};
+ const out=()=>{lsSet(LSN,null);setStore({user:null,acct:false})};
+ const del=()=>{lsSet(LA,null);lsSet(LSN,null);setStore({user:null,acct:false,wish:[]})};
+ const inp=k=>({borderColor:err[k]?'var(--accent)':'var(--line)',color:'var(--ink)'});
+ const cls='w-full px-3 py-2.5 border bg-transparent text-sm outline-none mt-1';
+ const Fld=(k,l,type,ph)=>html`<label class='block text-[11px] tracking-widest uppercase' style=${mute}>${l}<input type=${type||'text'} value=${f[k]} onInput=${set(k)} onChange=${set(k)} placeholder=${ph||''} class=${cls} style=${inp(k)}/>${err[k]&&html`<span class='normal-case tracking-normal text-xs' style=${{color:'var(--accent)'}}>${err[k]}</span>`}</label>`;
+ const Sel=(k,l,opts)=>html`<label class='block text-[11px] tracking-widest uppercase' style=${mute}>${l}<select value=${f[k]} onChange=${set(k)} class=${cls} style=${{borderColor:'var(--line)',background:'var(--card)',color:'var(--ink)'}}>${opts.map(o=>html`<option key=${o}>${o}</option>`)}</select></label>`;
+ return html`<div class='fixed inset-0 z-40 flex items-end sm:items-center justify-center sm:p-5'><div class='absolute inset-0 bg-black/50' onClick=${()=>setStore({acct:false})}></div>
+ <div class='card relative w-full max-w-lg overflow-y-auto p-6 sm:p-8' style=${{background:'var(--card)',maxHeight:'92%',paddingBottom:'calc(1.5rem + env(safe-area-inset-bottom,0px))'}}>
+  <div class='flex justify-between items-start mb-5'><div>${u?html`<p class='serif text-3xl'>Hello, ${u.name.split(' ')[0]}</p><p class='text-xs' style=${mute}>Member since ${u.created}</p>`:html`<p class='serif text-3xl'>${mode==='in'?'Welcome back':'Create your account'}</p>`}</div><button onClick=${()=>setStore({acct:false})} aria-label='Close'>\u2715</button></div>
+  ${!u&&html`<div class='flex gap-2 mb-5'>${[['in','Sign in'],['up','Create account']].map(([k,l])=>html`<button key=${k} onClick=${()=>{setMode(k);setErr({})}} class='flex-1 py-2 border text-xs tracking-widest uppercase' style=${chip(mode===k)}>${l}</button>`)}</div>`}
+  ${!u&&mode==='in'&&html`<div class='space-y-4'>${Fld('email','Email','email','you@example.com')}<button onClick=${doIn} class='w-full py-3 text-xs tracking-[.25em] uppercase' style=${{background:'var(--accent)',color:'#fff'}}>Sign in</button></div>`}
+  ${u&&html`<div class='flex gap-5 mb-5 text-xs tracking-widest uppercase border-b' style=${{borderColor:'var(--line)'}}>${[['details','Details'],['orders','Orders'],['privacy','Privacy']].map(([k,l])=>html`<button key=${k} onClick=${()=>setTab(k)} class='pb-2' style=${{color:tab===k?'var(--accent)':'var(--mute)',borderBottom:tab===k?'2px solid var(--accent)':'2px solid transparent'}}>${l}</button>`)}</div>`}
+  ${(u?tab==='details':mode==='up')&&html`<div class='space-y-4'>
+   ${Fld('name','Full name')}${Fld('email','Email','email')}${Fld('phone','Phone (optional)','tel','+49 170 0000000')}${Fld('address','Street address')}
+   <div class='grid grid-cols-2 gap-3'>${Fld('city','City')}${Fld('postal','Postal code','text',COUNTRIES[f.country].ph)}</div>
+   <div class='grid grid-cols-2 gap-3'>${Sel('country','Country',Object.keys(COUNTRIES))}${Sel('cur','Currency',Object.keys(RATE))}</div>
+   <div class='flex items-end gap-3'><div class='flex-1'>${Sel('size','Preferred size',SIZES.map(z=>z.k))}</div><button onClick=${()=>setF({...f,size:st.size,country:st.country})} class='text-xs underline pb-3' style=${mute}>Use my fit result</button></div>
+   <label class='flex gap-2 text-xs items-start'><input type='checkbox' checked=${f.marketing} onChange=${set('marketing')} class='mt-0.5'/> Send me occasional news and offers (optional)</label>
+   ${!u&&html`<div><label class='flex gap-2 text-xs items-start'><input type='checkbox' checked=${f.consent} onChange=${set('consent')} class='mt-0.5'/> <span>I agree to the <button class='underline' onClick=${()=>setStore({acct:false,legal:'Privacy'})}>privacy policy</button> and to my details being stored to process orders.</span></label>${err.consent&&html`<span class='text-xs' style=${{color:'var(--accent)'}}>${err.consent}</span>`}</div>`}
+   <button onClick=${doSave} class='w-full py-3 text-xs tracking-[.25em] uppercase' style=${{background:'var(--accent)',color:'#fff'}}>${u?'Save details':'Create account'}</button>
+   ${saved&&html`<p class='text-xs' style=${{color:'var(--gold)'}}>Saved. Your destination and currency now apply across the site.</p>`}</div>`}
+  ${u&&tab==='orders'&&html`<div class='text-sm space-y-3'><p class='serif text-xl'>No orders yet</p><p style=${mute}>Your orders and return requests will appear here. Wishlist: ${st.wish.length} item${st.wish.length===1?'':'s'}. Bag: ${st.cart.length} item${st.cart.length===1?'':'s'}.</p><a href='#shop' onClick=${()=>setStore({acct:false})} class='underline'>Browse the collection</a></div>`}
+  ${u&&tab==='privacy'&&html`<div class='text-sm space-y-4'><p style=${mute}>Your details are used only to process orders and returns. You can change or erase them at any time.</p>
+   <button onClick=${out} class='w-full py-3 border text-xs tracking-widest uppercase' style=${{borderColor:'var(--ink)'}}>Sign out</button>
+   ${delAsk?html`<div class='border p-3' style=${{borderColor:'var(--accent)'}}><p class='text-xs mb-2'>This permanently erases your account details from this device.</p><button onClick=${del} class='text-xs underline mr-4' style=${{color:'var(--accent)'}}>Yes, delete everything</button><button onClick=${()=>setDelAsk(false)} class='text-xs underline'>Cancel</button></div>`:html`<button onClick=${()=>setDelAsk(true)} class='text-xs underline' style=${mute}>Delete my account and data</button>`}</div>`}
+  <p class='text-[11px] mt-6' style=${mute}>Demo account: details and sign-in are stored on this device only, with no password. Connect a real login provider (Auth0, Clerk or Supabase) before launch.</p>
+ </div></div>`;
+}
+
+/* ---------- AI CHATBOT ---------- */
+function chatCtx(){
+ const s=store.s;
+ return `You are the concierge assistant for The House of Nawabs, a luxury slow-fashion brand selling hand-crafted Lucknow Chikankari and block-printed kurtis to Europe. Tone: warm, refined, concise (under 90 words), plain text, no markdown. Use only the facts below. If unsure, say so and suggest the WhatsApp link in this chat window. Never invent policies, prices or stock.
+SIZES: ${SIZES.map(z=>z.k+': UK '+z.uk+', EU '+z.eu+', US '+z.us+', garment chest/waist/hip '+z.g.join('/')+' cm').join('; ')}. Body limits for the recommendation: S under 92/74/98 cm (chest/waist/hip), M under 98/80/104, L under 104/86/110, XL above. The recommended size is the largest size any one measurement needs. The Fit Matrix on this page does it live.
+PRODUCTS (base price EUR): ${SHOP.map(p=>p.n+' '+p.p+' ('+p.fab+')').join('; ')}. Made to measure adds 40 EUR and is final sale.
+PRICING (DDP): duty applies to goods plus shipping, VAT to goods plus shipping plus duty. ${Object.entries(COUNTRIES).map(([k,v])=>k+' VAT '+v.vat+'% duty '+v.duty+'%').join('; ')}. Delivery: Express 38 EUR (3-5 working days), Economy 16 EUR (8-12 working days). Nothing to pay at the door. Rates are illustrative and confirmed at checkout. GBP and CHF are shown at demo rates.
+RETURNS: 14-day legal withdrawal right, extended to 30 days. Items unworn, unwashed, tags attached, original packaging. First size exchange is free. Damaged or incorrect items: we cover return shipping and refund everything including delivery and duties. Change of mind: prepaid customs-cleared label, flat 12 EUR fee deducted. Refund within 5-7 business days of inspection. Duty and VAT refunded in full. Made-to-measure is final sale unless faulty.
+CARE: hand wash cold, dry in shade, press inside-out on low heat.
+THIS CUSTOMER NOW: ${s.user?'signed in as '+s.user.name.split(' ')[0]+', saved size '+s.user.size:'guest'}, destination ${s.country}, delivery ${s.ship}, recommended size ${s.size}, currency ${s.cur}, bag: ${s.cart.length?s.cart.map(i=>i.n+' size '+i.size).join(', '):'empty'}. A 185 EUR piece would cost them ${landed(185).t.toFixed(2)} EUR landed with their chosen delivery.`;
+}
+function Chatbot({ck}){
+ const [open,setOpen]=useState(false),[msgs,setMsgs]=useState([]),[inp,setInp]=useState(''),[busy,setBusy]=useState(false);
+ const box=React.useRef(null);
+ useEffect(()=>{if(box.current)box.current.scrollTop=box.current.scrollHeight},[msgs,open]);
+ const send=async t=>{
+  t=(t||inp).trim(); if(!t||busy) return; setInp('');
+  const hist=[...msgs,{role:'user',content:t}];
+  const put=x=>setMsgs([...hist,{role:'assistant',content:x}]);
+  put(''); setBusy(true);
+  const input=hist.map((m,i)=>i===0?{role:'user',content:chatCtx()+'\n\nCustomer message: '+m.content}:m);
+  try{
+   const sample=window.claude&&await window.claude.use('sample');
+   if(!sample) throw {code:'none'};
+   const r=await sample(input,{cache:false,modelTier:'quick',onText:({text})=>put(text)});
+   put(r.text);
+  }catch(e){ put(e&&e.code==='rate_limited'?'Many requests at once. Please try again in a moment.':e&&(e.code==='none'||e.code==='not_granted')?'The assistant is unavailable right now. Our team is happy to help on WhatsApp during CET hours.':'Sorry, something went wrong. Please try again.'); }
+  setBusy(false);
+ };
+ const chips=['What size should I order?','What will I pay in France?','How do size exchanges work?'];
+ return html`<div>
+  ${!open&&html`<button onClick=${()=>setOpen(true)} class='fixed right-4 z-20 px-5 py-3 text-xs tracking-widest uppercase rounded-full shadow-lg' style=${{bottom:ck?'calc(8rem + env(safe-area-inset-bottom,0px))':'calc(1rem + env(safe-area-inset-bottom,0px))',background:'var(--accent)',color:'#fff'}}>\u2726 Ask Nawabs</button>`}
+  ${open&&html`<div class='fixed left-3 right-3 sm:left-auto sm:right-4 sm:w-96 card flex flex-col shadow-2xl' style=${{zIndex:25,bottom:'calc(0.75rem + env(safe-area-inset-bottom,0px))',height:'min(78vh,560px)',background:'var(--card)'}}>
+   <div class='flex items-center justify-between px-4 py-3 border-b' style=${{borderColor:'var(--line)'}}>
+    <div><p class='serif text-xl leading-none'>Nawabs Concierge</p><p class='text-[10px] tracking-widest uppercase mt-1' style=${{color:'var(--gold)'}}>AI assistant</p></div>
+    <div class='flex items-center gap-4 text-xs'><a href='https://wa.me/' target='_blank' rel='noopener' class='underline' style=${mute}>Human (WhatsApp)</a><button onClick=${()=>setOpen(false)} aria-label='Close chat'>\u2715</button></div></div>
+   <div ref=${box} class='flex-1 overflow-y-auto p-4 space-y-3 text-sm'>
+    <div class='max-w-[85%] border p-3' style=${{borderColor:'var(--line)'}}>Welcome to The House of Nawabs. Ask me about sizing, what you will pay delivered to your country, returns or fabric care.</div>
+    ${msgs.length===0&&html`<div class='flex flex-wrap gap-2'>${chips.map(c=>html`<button key=${c} onClick=${()=>send(c)} class='text-xs border px-3 py-2 text-left' style=${chip(false)}>${c}</button>`)}</div>`}
+    ${msgs.map((m,i)=>html`<div key=${i} class=${'flex '+(m.role==='user'?'justify-end':'')}><div class='max-w-[85%] p-3 whitespace-pre-wrap' style=${m.role==='user'?{background:'var(--accent)',color:'#fff'}:{border:'1px solid var(--line)'}}>${m.content||'\u2026'}</div></div>`)}
+   </div>
+   <div class='border-t p-3' style=${{borderColor:'var(--line)'}}>
+    <div class='flex gap-2'><input value=${inp} onInput=${e=>setInp(e.target.value)} onChange=${e=>setInp(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&send()} placeholder='Ask a question' aria-label='Message' class='flex-1 px-3 py-2 border bg-transparent text-sm outline-none' style=${{borderColor:'var(--line)',color:'var(--ink)'}}/>
+    <button onClick=${()=>send()} disabled=${busy} class='px-4 text-xs tracking-widest uppercase' style=${{background:'var(--ink)',color:'var(--bg)',opacity:busy?.5:1}}>Send</button></div>
+    <p class='text-[10px] mt-2' style=${mute}>AI can make mistakes. Final prices are confirmed at checkout.</p></div>
+  </div>`}</div>`;
+}
+function Overlays(){
+ const st=useStore(); const [ck,setCk]=useState(true),[done,setDone]=useState(false);
+ const goods=st.cart.reduce((a,i)=>a+i.price,0), L=landed(goods);
+ const rows=[['Garments',goods],[SHIP[st.ship].n+' delivery',L.sh],['Import duty ('+L.c.duty+'%)',L.d],['VAT · '+st.country+' ('+L.c.vat+'%)',L.v]];
+ return html`<div>
+ ${st.bag&&html`<div class="fixed inset-0 z-30 flex justify-end"><div class="absolute inset-0 bg-black/40" onClick=${()=>setStore({bag:false})}></div>
+  <aside class="relative w-full max-w-md h-full overflow-y-auto p-6" style=${{background:'var(--bg)',paddingTop:'calc(1.5rem + env(safe-area-inset-top,0px))',paddingBottom:'calc(1.5rem + env(safe-area-inset-bottom,0px))'}}>
+   <div class="flex justify-between items-center mb-6"><h3 class="serif text-3xl">Your bag</h3><button onClick=${()=>setStore({bag:false})} aria-label="Close">✕</button></div>
+   ${st.cart.length===0?html`<p class="text-sm" style=${mute}>Your bag is empty.</p>`:html`<div>
+    ${st.cart.map(i=>html`<div key=${i.k} class="flex justify-between py-3 border-b text-sm" style=${{borderColor:'var(--line)'}}><div><p class="serif text-lg">${i.n}</p><p class="text-xs" style=${mute}>Size ${i.size}${i.m?' · made to measure':''}</p><button class="text-xs underline" onClick=${()=>setStore({cart:st.cart.filter(x=>x.k!==i.k)})}>Remove</button></div><span>${eur(i.price)}</span></div>`)}
+    <table class="w-full text-sm mt-4"><tbody>${rows.map(([l,v])=>html`<tr key=${l}><td class="py-1.5" style=${mute}>${l}</td><td class="text-right">${eur(v)}</td></tr>`)}</tbody>
+     <tfoot><tr class="border-t-2" style=${{borderColor:'var(--ink)'}}><td class="pt-3 serif text-xl">Total, all paid</td><td class="pt-3 serif text-2xl text-right" style=${{color:'var(--accent)'}}>${eur(L.t)}</td></tr></tfoot></table>
+    <p class="text-xs mt-4" style=${mute}>Hassle-free returns through our European returns hub. No fees at your door.</p>
+    ${st.user?html`<p class="text-xs mt-3">Delivering to ${st.user.name}${st.user.city?', '+st.user.city:''}, ${st.user.country}</p>`:html`<button onClick=${()=>setStore({acct:true})} class="text-xs underline mt-3">Sign in for faster checkout</button>`}
+    <div class="flex flex-wrap gap-2 my-5">${['Card','Apple Pay','Google Pay','Klarna','iDEAL','Bancontact'].map(x=>html`<span key=${x} class="text-[11px] border px-2 py-1" style=${{borderColor:'var(--line)'}}>${x}</span>`)}</div>
+    <button onClick=${()=>setDone(true)} class="w-full py-3 text-xs tracking-[.25em] uppercase" style=${{background:'var(--accent)',color:'#fff'}}>Checkout</button>
+    ${done&&html`<p class="text-xs mt-3" style=${{color:'var(--gold)'}}>Demo only. Connect Stripe or Adyen to take real payments.</p>`}</div>`}
+  </aside></div>`}
+ ${st.legal&&html`<div class="fixed inset-0 z-40 flex items-center justify-center p-5"><div class="absolute inset-0 bg-black/50" onClick=${()=>setStore({legal:null})}></div>
+  <div class="card relative max-w-lg w-full p-8" style=${{background:'var(--card)'}}><h3 class="serif text-3xl mb-3">${st.legal}</h3><p class="text-sm leading-relaxed" style=${mute}>${LEGAL[st.legal]}</p>
+  <p class="text-xs mt-4" style=${mute}>Placeholder text. Have these pages written or reviewed by a qualified lawyer before launch.</p>
+  <button onClick=${()=>setStore({legal:null})} class="mt-5 text-xs tracking-widest uppercase underline">Close</button></div></div>`}
+ ${ck&&html`<div class="fixed left-3 right-3 sm:right-auto z-20 sm:max-w-xs card p-4 text-xs" style=${{bottom:'calc(1rem + env(safe-area-inset-bottom,0px))'}}>We use essential cookies, plus optional ones with your consent.<div class="flex gap-3 mt-3"><button onClick=${()=>setCk(false)} class="underline">Accept</button><button onClick=${()=>setCk(false)} class="underline">Essential only</button></div></div>`}
+ <${Account}/><${Chatbot} ck=${ck}/>
+ </div>`;
+}
+
+/* ---------- APP ---------- */
+function App() {
+  const [dark, setDark] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); }, [dark]);
+  return html`<div>
+    <header class="sticky top-0 z-10 backdrop-blur border-b" style=${{borderColor:'var(--line)',background:'color-mix(in srgb,var(--bg) 85%,transparent)',top:'env(safe-area-inset-top,0px)'}}>
+      <div class="max-w-6xl mx-auto px-5 py-3 md:py-4 flex flex-wrap items-center justify-between gap-y-2">
+        <a href="#top" class="serif text-2xl tracking-wide whitespace-nowrap"><span class="md:hidden">Nawabs</span><span class="hidden md:inline">The House of Nawabs</span></a>
+        <nav class="flex items-center gap-3 md:gap-8 text-[11px] tracking-[.1em] md:tracking-[.2em] uppercase" style=${{color:'var(--mute)'}}>
+          <a href="#shop" class="hidden md:inline hover:opacity-70">Shop</a><a href="#fit" class="hidden md:inline hover:opacity-70">Fit</a><a href="#price" class="hidden md:inline hover:opacity-70">Price</a><a href="#craft" class="hidden md:inline hover:opacity-70">Craft</a><a href="#returns" class="hidden md:inline hover:opacity-70">Returns</a><${CurSelect}/><${BagBtn}/><${AcctBtn}/>
+          <button onClick=${()=>setDark(d=>!d)} aria-label="Toggle theme">${dark?'☀':'☾'}</button></nav>
+        <div class="snap-strip w-full md:hidden flex gap-6 overflow-x-auto whitespace-nowrap text-[11px] tracking-[.15em] uppercase pb-1" style=${{color:'var(--mute)'}}>${[['shop','Shop'],['fit','Fit'],['price','Price'],['craft','Craft'],['artisans','Makers'],['returns','Returns'],['journal','Journal']].map(([h,l])=>html`<a key=${h} href=${'#'+h} class="py-1">${l}</a>`)}</div>
+      </div>
+    </header>
+    <main id="top" class="max-w-6xl mx-auto px-5">
+      <div class="pt-10 md:pt-24 text-center max-w-2xl mx-auto">
+        <p class="text-xs tracking-[.3em] uppercase" style=${{color:'var(--gold)'}}>Lucknow · Made slowly since 1902</p>
+        <h1 class="serif text-4xl sm:text-5xl md:text-7xl mt-4 leading-[1.05]">Heirloom kurtis, <span class="italic" style=${{color:'var(--accent)'}}>honestly</span> priced.</h1>
+        <p class="mt-6" style=${{color:'var(--mute)'}}>Find your fit, see your full European price, and meet the hands behind every stitch.</p>
+      </div>
+      <${Overlays}/><${Shop}/><${FitMatrix}/><${Pricing}/><${Lookbook}/><${Trust}/><${Returns}/><${Journal}/>
+    </main>
+    <footer class="text-center py-12 text-xs tracking-[.25em] uppercase border-t mt-8" style=${{borderColor:'var(--line)',color:'var(--mute)'}}>
+      <${Newsletter}/>© The House of Nawabs · Handmade in Lucknow<${LegalLinks}/></footer>
+  </div>`;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
